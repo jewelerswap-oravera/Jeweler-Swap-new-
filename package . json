@@ -1,0 +1,14 @@
+{
+  "name": "jewelerswap-ecosystem",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "start": "concurrently \"npm run backend\" \"npm run frontend\"",
+    "backend": "cd backend && npm start",
+    "frontend": "cd frontend && npx expo start",
+    "deploy:contracts": "cd contracts && npx hardhat run scripts/deploy.js --network mumbai"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
