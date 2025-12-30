@@ -11,9 +11,7 @@
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
-    "assetBundlePatterns": [
-      "**/*"
-    ],
+    "assetBundlePatterns": ["**/*"],
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.oravera.jewelerswap"
@@ -32,9 +30,9 @@
       "eas": {
         "projectId": "f065fd55-d559-4c58-9888-a2ccc02823f0"
       }
+    },
+    "cli": {
+      "appVersionSource": "remote"
     }
-  },
-  "cli": {
-    "appVersionSource": "remote"
   }
 }
