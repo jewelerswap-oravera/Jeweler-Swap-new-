@@ -1,0 +1,111 @@
+const express = require('express');
+const cors = require('cors');
+const { ethers } = require('ethers');
+const multer = require('multer');
+require('dotenv').config();
+
+const app = express();
+const upload = multer({ storage: multer.memoryStorage() });
+
+app.use(cors());
+app.use(express.json());
+
+// Подключение к блокчейну
+const provider = new ethers.JsonRpcProvider(process.env.MUMBAI_RPC_URL);
+const contractAddress = process.env.CONTRACT_ADDRESS;
+const contractABI = [
+  "function requestPassport(string memory _nfcSerial, string memory _ipfsHash, string memory _metadata) public payable returns (uint256)",
+  "function verifyPassport(uint256 _tokenId) public",
+  "function getPassportByNFC(string memory _nfcSerial) public view returns (tuple(uint256 tokenId, address owner, address verifiedBy, uint256 verifiedAt, string nfcSerial, string ipfsHash, string metadata, bool isActive))",
+  "function jewelers(address) public view returns (bool)",
+  "function addJeweler(address _jeweler) public",
+  "event PassportCreated(uint256 indexed tokenId, address indexed owner, string nfcSerial)",
+  "event PassportVerified(uint256 indexed tokenId, address indexed jeweler)"
+];
+
+const contract = new ethers.Contract(contractAddress, contractABI, provider);
+
+// 📌 API ДЛЯ ПОЛЬЗОВАТЕЛЕЙ
+app.get('/', (req, res) => {
+  res.json({ message: 'JewelerSwap API работает! 🚀' });
+});
+
+// 1. Создать NFT-паспорт
+app.post('/api/passport/request', upload.single('photo'), async (req, res) => {
+  try {
+    const { nfcSerial, metadata, userAddress } = req.body;
+    
+    // В реальности здесь загрузка в IPFS
+    const ipfsHash = `ipfs://dummy/${nfcSerial}.jpg`;
+    
+    const wallet = new ethers.Wallet(process.env.PRIVATE_KEY, provider);
+    const contractWithSigner = contract.connect(wallet);
+    
+    const tx = await contractWithSigner.requestPassport(
+      nfcSerial,
+      ipfsHash,
+      metadata,
+      { value: ethers.parseEther("0.001") }
+    );
+    
+    await tx.wait();
+    res.json({ success: true, txHash: tx.hash, message: "NFT-паспорт создан" });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// 2. Проверить NFC
+app.post('/api/nfc/check', async (req, res) => {
+  try {
+    const { nfcCode } = req.body;
+    const passport = await contract.getPassportByNFC(nfcCode);
+    
+    res.json({
+      success: true,
+      passport: {
+        tokenId: passport.tokenId.toString(),
+        owner: passport.owner,
+        verifiedBy: passport.verifiedBy,
+        verified: passport.isActive,
+        nfcSerial: passport.nfcSerial
+      }
+    });
+  } catch (error) {
+    res.json({ success: false, message: "NFC не найден" });
+  }
+});
+
+// 3. Панель ювелира (верификация)
+app.post('/api/jeweler/verify', async (req, res) => {
+  try {
+    const { tokenId, jewelerAddress } = req.body;
+    
+    const wallet = new ethers.Wallet(process.env.JEWELER_KEY, provider);
+    const contractWithJeweler = contract.connect(wallet);
+    
+    const tx = await contractWithJeweler.verifyPassport(tokenId);
+    await tx.wait();
+    
+    res.json({ success: true, message: "Паспорт верифицирован!" });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// 4. Получить все паспорта (упрощенно)
+app.get('/api/passports', async (req, res) => {
+  res.json({
+    success: true,
+    passports: [
+      { id: 1, nfc: "NFC001", verified: true, type: "кольцо" },
+      { id: 2, nfc: "NFC002", verified: false, type: "цепочка" }
+    ]
+  });
+});
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`✅ Сервер запущен: http://localhost:${PORT}`);
+  console.log(`🔗 API: http://localhost:${PORT}/api/passports`);
+});
