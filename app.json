@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "JewelerSwap",
-    "slug": "jewelerswap",
+    "slug": "jeweler-swap-",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -11,7 +11,9 @@
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
-    "assetBundlePatterns": ["**/*"],
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.oravera.jewelerswap"
@@ -31,5 +33,8 @@
         "projectId": "f065fd55-d559-4c58-9888-a2ccc02823f0"
       }
     }
+  },
+  "cli": {
+    "appVersionSource": "remote"
   }
 }
